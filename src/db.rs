@@ -9,14 +9,14 @@ pub struct Datastore {
 }
 
 impl Datastore {
-    pub fn new(path: String) -> Datastore {
+    pub fn new(path: String) -> Result<Datastore, std::io::Error> {
         let mut store = Datastore {
             path,
             notes: Some(vec![]),
         };
         // TODO: error handling?
-        store.read_backup().unwrap();
-        store
+        store.read_backup()?;
+        Ok(store)
     }
     pub fn line_as_note(&self, line: &str) -> Option<Note> {
         let split = line.split("|").collect::<Vec<&str>>();
