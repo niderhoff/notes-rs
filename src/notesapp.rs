@@ -1,7 +1,7 @@
-use crate::db::Database;
+use crate::db::Datastore;
 use crate::Note;
 pub struct NotesApp {
-    db: Database,
+    db: Datastore,
 }
 
 impl NotesApp {
@@ -10,7 +10,7 @@ impl NotesApp {
     }
     pub fn new_at(db_name: Option<String>) -> NotesApp {
         let db_name = db_name.unwrap_or(String::from("notes.txt"));
-        let db = crate::db::Database::new(db_name);
+        let db = crate::db::Datastore::new(db_name);
         NotesApp { db }
     }
 
@@ -41,19 +41,23 @@ impl NotesApp {
     }
 
     pub fn delete(&mut self, id: &usize) -> Result<(), Box<dyn std::error::Error>> {
-        let _got = self.db.delete(id)?;
-        println!("removed note {}", id);
-        //todo: use returned note
-        //println!("removed note {}: {}", got.id, got.text);
+        let note = self.db.delete(id)?;
+        println!("removed note {}: {}", id, note.text);
         Ok(())
     }
-    pub fn update(&mut self, id: usize, buf: String) -> Result<(), Box<dyn std::error::Error>> {
-        let r = self.db.replace(Note {
+    pub fn update(self, id: usize, buf: String) -> Result<Note, Box<dyn std::error::Error>> {
+        let oldnote = self.db.replace(
             id,
-            text: buf.clone(),
-        });
-        println!("updated note {}: {}", id, &buf);
-        Ok(r?)
+            Note {
+                id,
+                text: buf.clone(),
+            },
+        )?;
+        println!(
+            "updated note {} from '{}' to '{}",
+            oldnote.id, oldnote.text, buf
+        );
+        Ok(oldnote)
     }
 }
 

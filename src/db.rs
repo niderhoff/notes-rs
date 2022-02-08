@@ -3,20 +3,20 @@ use crate::note::Note;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 
-pub struct Database {
+pub struct Datastore {
     pub path: String,
     pub notes: Option<Vec<Note>>,
 }
 
-impl Database {
-    pub fn new(path: String) -> Database {
-        let mut db = Database {
+impl Datastore {
+    pub fn new(path: String) -> Datastore {
+        let mut store = Datastore {
             path,
             notes: Some(vec![]),
         };
         // TODO: error handling?
-        db.read_backup().unwrap();
-        db
+        store.read_backup().unwrap();
+        store
     }
     pub fn line_as_note(&self, line: &str) -> Option<Note> {
         let split = line.split("|").collect::<Vec<&str>>();
@@ -28,13 +28,17 @@ impl Database {
             None
         }
     }
-    pub fn replace(&mut self, note: Note) -> Result<(), std::io::Error> {
-        if let Some(notes) = &mut self.notes {
-            let index = 1usize;
-            let _ = std::mem::replace(&mut notes[index], note);
-        }
-        // todo return old value
-        Ok(())
+    pub fn replace(mut self, id: usize, newnote: Note) -> Result<Note, Box<dyn std::error::Error>> {
+        // grab all notes
+        let nvec = self.notes.as_mut().ok_or(DatastoreError::NotUpdateable)?;
+        // find index
+        let idx = &mut nvec
+            .iter()
+            .position(|elem| elem.id == id)
+            .ok_or(DatastoreError::UnknownId { given: id })?;
+        let old = std::mem::replace(&mut nvec[*idx], newnote);
+        self.write_backup()?;
+        Ok(old)
     }
     pub fn read_backup(&mut self) -> Result<usize, std::io::Error> {
         let notes = std::fs::read_to_string(&self.path).map_or(vec![], |buf| {
@@ -88,19 +92,16 @@ impl Database {
     pub fn get_note_by_id(&self, id: &usize) -> Option<&Note> {
         self.notes.as_ref()?.iter().find(|x| x.id == *id)
     }
-    pub fn delete(&mut self, id: &usize) -> Result<(), Box<dyn std::error::Error>> {
-        let _r = {
-            let idx = self
-                .get_index_by_id(id)
-                .ok_or(DatastoreError::InvalidId { given: *id })?;
-            let ns = &mut self.notes;
-            match ns {
-                Some(ns) => Some(ns.remove(idx)),
-                None => None,
-            }
+    pub fn delete(&mut self, id: &usize) -> Result<Note, Box<dyn std::error::Error>> {
+        let idx = self
+            .get_index_by_id(id)
+            .ok_or(DatastoreError::UnknownId { given: *id })?;
+        let ns = self.notes.as_mut();
+        let result = match ns {
+            Some(ns) => Ok(ns.remove(idx)),
+            None => Err(DatastoreError::Empty),
         };
         self.write_backup()?;
-        //Todo: return deleted note
-        Ok(())
+        Ok(result?)
     }
 }

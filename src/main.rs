@@ -50,13 +50,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             n.delete(&id)
         }
         Some(("update", sub_m)) => {
-            let id = Note::get_id(sub_m);
+            let id = Note::get_id(sub_m)?;
             let buf = sub_m
                 .values_of("text")
                 .unwrap()
                 .collect::<Vec<&str>>()
                 .join(" ");
-            n.update(id?, buf)
+            n.update(id, buf)?;
+            Ok(())
         }
         _ => Ok(()),
     }
