@@ -1,5 +1,5 @@
 [package]
-name = "cli-app"
+name = "notes"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }
+thiserror = { version = "1.0"}
