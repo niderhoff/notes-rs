@@ -14,7 +14,6 @@ impl Datastore {
             path,
             notes: Some(vec![]),
         };
-        // TODO: error handling?
         store.read_backup()?;
         Ok(store)
     }
@@ -41,6 +40,7 @@ impl Datastore {
         Ok(old)
     }
     pub fn read_backup(&mut self) -> Result<usize, std::io::Error> {
+        // TODO: instead if map_or we want to handle the case where we cannot read from the existing file.
         let notes = std::fs::read_to_string(&self.path).map_or(vec![], |buf| {
             let mut newvec = vec![];
             for line in buf.lines().filter(|l| *l != "") {

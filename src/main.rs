@@ -8,7 +8,7 @@ use crate::notesapp::NotesApp;
 use clap::{App, AppSettings, Arg};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut n = NotesApp::new();
+    let mut n = NotesApp::new()?;
     let app = App::new("notes")
         .setting(AppSettings::ArgRequiredElseHelp)
         .subcommand(

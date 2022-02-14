@@ -1,17 +1,18 @@
 use crate::db::Datastore;
+use std::error::Error;
 use crate::Note;
 pub struct NotesApp {
     db: Datastore,
 }
 
 impl NotesApp {
-    pub fn new() -> NotesApp {
+    pub fn new() -> Result<NotesApp, Box<dyn Error>> {
         NotesApp::new_at(None)
     }
-    pub fn new_at(db_name: Option<String>) -> NotesApp {
+    pub fn new_at(db_name: Option<String>) -> Result<NotesApp, Box<dyn Error>> {
         let db_name = db_name.unwrap_or(String::from("notes.txt"));
-        let db = crate::db::Datastore::new(db_name);
-        NotesApp { db }
+        let db = crate::db::Datastore::new(db_name)?;
+        Ok(NotesApp { db })
     }
 
     pub fn add(&mut self, buf: String) -> Result<(), Box<dyn std::error::Error>> {
@@ -67,14 +68,14 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let mut n = NotesApp::new();
+        let mut n = NotesApp::new().unwrap();
         let newtext = String::from("this my first note text");
         n.add(newtext).unwrap();
     }
 
     #[test]
     fn get() {
-        let mut n = NotesApp::new();
+        let n = NotesApp::new().unwrap();
         n.get_all_notes().unwrap();
     }
 }
